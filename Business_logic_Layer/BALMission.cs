@@ -23,10 +23,11 @@ namespace Business_logic_Layer
         {
             return _dalMission.MissionList();
         }
-        public string AddMission(Missions  mission)
+        public async Task<string> AddMission(Missions  mission)
         {
-            return _dalMission.AddMission(mission);
-        }       
+            return await _dalMission.AddMission(mission);
+        }
+      
         public Missions MissionDetailById(int id)
         {
             return _dalMission.MissionDetailById(id);

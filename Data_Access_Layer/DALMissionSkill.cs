@@ -31,7 +31,22 @@ namespace Data_Access_Layer
         {
             try
             {
-                _cIDbContext.MissionSkill.Add(missionSkill);
+                int maxIdStr = _cIDbContext.MissionSkill.Max(ud => ud.Id);
+                int maxId = 0;
+                if (maxIdStr > maxId)
+                {
+                    maxId = maxIdStr;
+                }
+                int newmaxId = maxId + 1;
+                var newMissionSkill = new MissionSkill
+                {
+                    Id = newmaxId,
+                    SkillName = missionSkill.SkillName,
+                    Status = missionSkill.Status,
+                    IsDeleted = false
+
+                };
+                _cIDbContext.MissionSkill.Add(newMissionSkill);
                 await _cIDbContext.SaveChangesAsync();
                 return "Save Skill Successfully..";
             }
@@ -50,7 +65,7 @@ namespace Data_Access_Layer
                 {
                     existingSkill.SkillName = missionSkill.SkillName;
                     existingSkill.Status = missionSkill.Status;
-                    existingSkill.ModifiedDate = DateTime.Now;
+                    existingSkill.ModifiedDate = DateTime.UtcNow;
 
                     await _cIDbContext.SaveChangesAsync();
                     return "Update Mission Skill Successfully..";

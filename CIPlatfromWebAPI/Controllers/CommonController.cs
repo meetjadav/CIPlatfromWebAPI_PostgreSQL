@@ -1,4 +1,5 @@
 ﻿using Business_logic_Layer;
+using Data_Access_Layer;
 using Data_Access_Layer.Common;
 using Data_Access_Layer.Repository.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -12,12 +13,16 @@ namespace Web_API.Controllers
     public class CommonController : ControllerBase
     {
         private readonly BALCommon _balCommon;
-        private readonly Microsoft.AspNetCore.Hosting.IHostingEnvironment _hostingEnvironment;
+        private readonly BALMission _balMission;
+        private readonly IWebHostEnvironment _hostingEnvironment;
+        private readonly ILogger<AdminUserController> _logger;
 
-        public CommonController(BALCommon balCommon, Microsoft.AspNetCore.Hosting.IHostingEnvironment hostingEnvironment)
+        public CommonController(BALCommon balCommon, IWebHostEnvironment hostingEnvironment, ILogger<AdminUserController> logger, BALMission balMission)
         {
             _balCommon = balCommon;
             _hostingEnvironment = hostingEnvironment;
+            _logger = logger;
+            _balMission = balMission;
         }
 
         [HttpGet]
@@ -132,36 +137,84 @@ namespace Web_API.Controllers
         [Authorize]
         public async Task<IActionResult> UploadImage([FromForm] UploadFile upload)
         {
-            string filePath = "";
-            string fullPath = "";
-            List<string> fileList = new List<string>();
-            var files = Request.Form.Files;
-            if (files != null && files.Count > 0)
+            if (upload == null || Request.Form.Files == null || Request.Form.Files.Count == 0)
             {
-                foreach (var file in files)
+                return BadRequest(new { success = false, message = "No file uploaded" });
+            }
+
+            // Log the initial state
+            _logger.LogInformation("Starting file upload...");
+            _logger.LogInformation($"ModuleName: {upload.ModuleName}");
+            _logger.LogInformation($"WebRootPath: {_hostingEnvironment.WebRootPath}");
+
+            string uploadFolder;
+            try
+            {
+                uploadFolder = Path.Combine(_hostingEnvironment.WebRootPath, "UploadMissionImage", upload.ModuleName);
+                _logger.LogInformation($"Upload folder path: {uploadFolder}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error combining paths: {ex.Message}");
+                return StatusCode(500, new { success = false, message = "Error combining paths" });
+            }
+
+            if (!Directory.Exists(uploadFolder))
+            {
+                try
                 {
-                    string fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
-                    filePath = Path.Combine("UploadMissionImage", upload.ModuleName);
-                    string fileRootPath = Path.Combine(_hostingEnvironment.WebRootPath, "UploadMissionImage", upload.ModuleName);
+                    Directory.CreateDirectory(uploadFolder);
+                    _logger.LogInformation($"Created directory: {uploadFolder}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error creating directory: {ex.Message}");
+                    return StatusCode(500, new { success = false, message = "Error creating directory" });
+                }
+            }
 
-                    if (!Directory.Exists(fileRootPath))
-                    {
-                        Directory.CreateDirectory(fileRootPath);
-                    }
+            List<string> fileList = new List<string>();
 
-                    string name = Path.GetFileNameWithoutExtension(fileName);
-                    string extension = Path.GetExtension(fileName);
-                    string fullFileName = name + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + extension;
-                    fullPath = Path.Combine(filePath, fullFileName);
-                    string fullRootPath = Path.Combine(fileRootPath, fullFileName);
-                    using (var stream = new FileStream(fullRootPath, FileMode.Create))
+            foreach (var file in Request.Form.Files)
+            {
+                string fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+                string name = Path.GetFileNameWithoutExtension(fileName);
+                string extension = Path.GetExtension(fileName);
+                string fullFileName = $"{name}_{DateTime.Now:yyyyMMddHHmmss}{extension}";
+                string fullPath = Path.Combine(uploadFolder, fullFileName);
+
+                try
+                {
+                    using (var stream = new FileStream(fullPath, FileMode.Create))
                     {
                         await file.CopyToAsync(stream);
                     }
-                    fileList.Add(fullPath);
+                    fileList.Add(Path.Combine("UploadMissionImage", upload.ModuleName, fullFileName).Replace("\\", "/"));
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, new { success = false, message = $"Error uploading file: {ex.Message}" });
                 }
             }
+
             return Ok(new { success = true, Data = fileList });
+        }
+
+
+        [HttpPost]
+        [Route("AddMission")]
+        [Authorize]
+        public async Task<IActionResult> AddMission(Missions mission)
+        {
+            try
+            {
+                var result = await _balMission.AddMission(mission);
+                return Ok(new { status = "Success", data = result });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { status = "Error", message = ex.Message });
+            }
         }
 
         [HttpPost]

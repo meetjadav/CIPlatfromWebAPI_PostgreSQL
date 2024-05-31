@@ -1,4 +1,6 @@
-﻿namespace Data_Access_Layer.Common
+﻿using Microsoft.AspNetCore.Http;
+
+namespace Data_Access_Layer.Common
 {
     public class DropDown
     {
@@ -9,5 +11,7 @@
     public class UploadFile
     {
         public string ModuleName { get; set; }
+        public IFormFile File { get; set; }
+
     }
 }

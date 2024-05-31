@@ -27,7 +27,7 @@ namespace Data_Access_Layer
                                          where !u.IsDeleted && u.UserType == "user" && !userDetail.IsDeleted
                                          select new UserDetail
                                          {
-                                             Id = u.Id,
+                                             Id = (int)u.Id,
                                              FirstName = u.FirstName,
                                              LastName = u.LastName,
                                              PhoneNumber = u.PhoneNumber,

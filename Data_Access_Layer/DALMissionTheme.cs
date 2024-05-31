@@ -31,7 +31,22 @@ namespace Data_Access_Layer
         {
             try
             {
-                _cIDbContext.MissionTheme.Add(missionTheme);
+                int maxIdStr = _cIDbContext.MissionTheme.Max(ud => ud.Id);
+                int maxId = 0;
+                if (maxIdStr > maxId)
+                {
+                    maxId = maxIdStr;
+                }
+                int newmaxId = maxId + 1;
+                var newMissionTheme = new MissionTheme
+                {
+                    Id = newmaxId,
+                    ThemeName = missionTheme.ThemeName,
+                    Status = missionTheme.Status,
+                    IsDeleted = false
+
+                };
+                _cIDbContext.MissionTheme.Add(newMissionTheme);
                 await _cIDbContext.SaveChangesAsync();
                 return "Save Theme Detail Successfully..";
             }
@@ -50,7 +65,7 @@ namespace Data_Access_Layer
                 {
                     existingTheme.ThemeName = missionTheme.ThemeName;
                     existingTheme.Status = missionTheme.Status;
-                    existingTheme.ModifiedDate = DateTime.Now;
+                    existingTheme.ModifiedDate = DateTime.UtcNow;
 
                     await _cIDbContext.SaveChangesAsync();
                     return "Update Mission Theme Successfully..";

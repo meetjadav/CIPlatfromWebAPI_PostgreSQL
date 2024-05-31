@@ -36,7 +36,7 @@ namespace Data_Access_Layer
                 .ToList();
         }
 
-        public string AddMission(Missions mission)
+        public async Task<string> AddMission(Missions mission)
         {
             string result = "";
             try
@@ -162,7 +162,7 @@ namespace Data_Access_Layer
                                   Id = mm.ma.Id,
                                   MissionId = mm.ma.MissionId,
                                   MissionTitle = mm.m.MissionTitle,
-                                  UserId = u.Id,
+                                  UserId = (int)u.Id,
                                   UserName = u.FirstName + " " + u.LastName,
                                   AppliedDate = mm.ma.AppliedDate,
                                   Status = mm.ma.Status

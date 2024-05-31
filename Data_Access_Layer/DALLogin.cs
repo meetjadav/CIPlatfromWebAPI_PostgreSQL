@@ -44,6 +44,8 @@ namespace Data_Access_Layer
                 if (!emailExists)
                 {
                     string maxEmployeeIdStr = _cIDbContext.UserDetail.Max(ud => ud.EmployeeId);
+                    int maxIdStr = (int)_cIDbContext.User.Max(ud => ud.Id);
+
                     int maxEmployeeId = 0;
 
                     // Convert the maximum EmployeeId to an integer
@@ -63,21 +65,29 @@ namespace Data_Access_Layer
                     // Increment the maximum EmployeeId by 1 for the new user
                     int newEmployeeId = maxEmployeeId + 1;
 
+                    int maxId = 0;
+                    if (maxIdStr > maxId)
+                    {
+                        maxId = maxIdStr;
+                    }
+                    int newmaxId = maxId + 1;
+
                     // Create a new user entity
                     var newUser = new User
                     {
+                        Id = newmaxId,
                         FirstName = user.FirstName,
                         LastName = user.LastName,
                         PhoneNumber = user.PhoneNumber,
                         EmailAddress = user.EmailAddress,
                         Password = user.Password,
                         UserType = user.UserType,
-                        CreatedDate = DateTime.Now,
+                        CreatedDate = DateTime.UtcNow,
                         IsDeleted = false
                     };
                     var newUserDetail = new UserDetail
                     {
-                        UserId = user.Id,
+                        UserId = newmaxId,
                         FirstName = user.FirstName,
                         LastName = user.LastName,
                         PhoneNumber = user.PhoneNumber,
@@ -124,17 +134,15 @@ namespace Data_Access_Layer
                     existingUser.FirstName = updatedUser.FirstName;
                     existingUser.LastName = updatedUser.LastName;
                     existingUser.PhoneNumber = updatedUser.PhoneNumber;
-                    existingUser.UserType = updatedUser.UserType;
-                    existingUser.ModifiedDate = DateTime.Now;
+                    existingUser.ModifiedDate = DateTime.UtcNow;
 
                     existingUserDetail.FirstName = updatedUser.FirstName;
                     existingUserDetail.LastName = updatedUser.LastName;
                     existingUserDetail.PhoneNumber = updatedUser.PhoneNumber;
                     existingUserDetail.EmailAddress = updatedUser.EmailAddress;
-                    existingUserDetail.UserType = updatedUser.UserType;
                     existingUserDetail.Name = updatedUser.FirstName;
                     existingUserDetail.Surname = updatedUser.LastName;
-                    existingUserDetail.ModifiedDate = DateTime.Now;
+                    existingUserDetail.ModifiedDate = DateTime.UtcNow;
 
                     // Save changes to the database
                     _cIDbContext.SaveChanges();
